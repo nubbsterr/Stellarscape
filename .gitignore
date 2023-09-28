@@ -1,0 +1,11 @@
+# Unity specific
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Ll]ibrary/
+[Ll]ogs/
+[Mm]emoryCaptures/
+[Uu]serSettings/
+
+# VS Code specific
+.vscode/
