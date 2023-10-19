@@ -10,9 +10,11 @@ GameObject:
   m_Component:
   - component: {fileID: 8299761151742661883}
   - component: {fileID: 8332947072063615528}
+  - component: {fileID: 1567410017699003502}
+  - component: {fileID: 19969071889564053}
   m_Layer: 0
   m_Name: Player
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -58,3 +60,33 @@ CharacterController:
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &1567410017699003502
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3736936045320800699}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dce46835ee07e7a41818cc54dc325bf9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerSpeed: 10
+--- !u!114 &19969071889564053
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3736936045320800699}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d415b17447a745b4b83fc377bcb63d4b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isFullAuto: 1
+  fireRate: 0.1
+  bulletSpeed: 150
+  gunBarrel: {fileID: 2351436850673068268, guid: bae4c6ec54a83b34b9f7a0286348552b, type: 3}
+  bulletPrefab: {fileID: 8436463081169492413, guid: 731f6bf08084eb94eb279e8b13ca4bed, type: 3}

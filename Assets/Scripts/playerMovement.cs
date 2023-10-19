@@ -20,7 +20,6 @@ public class playerMovement : MonoBehaviour
             movement *= sprintMultiplier;
             Debug.Log("Sprinting");
         }
-
         // Normalize the movement vector before applying speed
         movement.Normalize();
 
