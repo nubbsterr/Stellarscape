@@ -4,15 +4,22 @@ using UnityEngine;
 
 public class playerShooting : MonoBehaviour
 {
-    public bool isFullAuto = false; // controls full auto firing and semiauto firing, depending on continous mouse input or not
-    public float fireRate = 0.1f; // controls full auto firerate, the delay between shots in full auto
-    public float bulletSpeed = 10.0f; // the speed at which bullets will travel
-    public Transform gunBarrel; // point where bullets will exit the gun
-    public GameObject bulletPrefab; // a variable that will take our AR_Bullet prefab as an argument, allowing us to clone the bullet for shooting
+    // all public variables: (global booleans, variables, objects, etc.)
+        public bool isFullAuto = false; // controls full auto firing and semiauto firing, depending on continous mouse input or not
+        public float fireRate = 0.1f; // controls full auto firerate, the delay between shots in full auto
+        public float bulletSpeed = 10.0f; // the speed at which bullets will travel
+        public Transform gunBarrel; // point where bullets will exit the gun
+        public GameObject bulletPrefab; // a variable that will take our AR_Bullet prefab as an argument, allowing us to clone the bullet for shooting
+        public GameObject crosshair; // refers to our crosshair on screen
+        public GameObject hitmarker; // basic hitmarker image
+        public GameObject killmarker; // shows upon killing an enemy
+    
+    // private variables: (functions, private parameters, etc.)
+        private bool isShooting = false; // controls if a player is shooting or not
+        private bool isADS = false; // controls/checks if the player is ADS'ed or ADSing to display the crosshair or not
+        private float maxRaycastDistance = 100.0f; // sets the effective distance of bullets, since targets can only be hit up to 100m (100.0f) by the raycast.
 
-    private bool isShooting = false; // controls if a player is shooting or not
-    private float maxRaycastDistance = 100.0f; // sets the effective distance of bullets, since targets can only be hit up to 100m (100.0f) by the raycast.
-
+        public int targetsHit = 0; // BURNER VARIABLE, DELETE ONCE DAMAGE DEALING AND PROPER DEATH IS SET
     // Start is called before the first frame update
     void Start()
     {
@@ -22,6 +29,8 @@ public class playerShooting : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        ADS(); // starts running our ADS function
+
         if (Input.GetKeyDown(KeyCode.B))
         {
             isFullAuto = !isFullAuto; // Toggle between full-auto and semi-auto
@@ -51,6 +60,55 @@ public class playerShooting : MonoBehaviour
         }
 
     }
+
+    private void ADS()
+    {
+        if (isADS == false)
+        {
+            crosshair.SetActive(true); // activates the crosshair onscreen
+            if (Input.GetMouseButtonDown(1))
+            {
+                isADS = true;
+                crosshair.SetActive(false); // deactivates the crosshair onscreen
+            }
+        }
+        else if (isADS == true) // if we are ADSed
+        {
+            crosshair.SetActive(false); // crosshair is deactivated
+            if (Input.GetMouseButtonUp(1)) // if mouse2 is released
+            {
+                isADS = false;
+                crosshair.SetActive(true); // re-enables the crosshair
+            }
+        }
+    }
+
+    private void HandleHitMarker()
+    {
+    hitmarker.SetActive(true); // Display the hit marker
+
+    // deactivates the hit marker after a specified delay
+    Invoke("DeactivateHitMarker", 0.3f);
+    }
+
+    private void DeactivateHitMarker()
+    {
+        hitmarker.SetActive(false);
+    }
+
+    private void HandleKillMarker()
+    {
+    killmarker.SetActive(true); // Display the hit marker
+
+    // deactivates the hit marker after a specified delay
+    Invoke("DeactivateKillMarker", 1.0f);
+    }
+
+    private void DeactivateKillMarker()
+    {
+        killmarker.SetActive(false);
+    }
+
     private void FireBullet()
     {
         Ray ray = new Ray(gunBarrel.position, gunBarrel.forward); 
@@ -64,9 +122,23 @@ public class playerShooting : MonoBehaviour
         { // these two condiitonals check if the raycast has hit anything with the tag Target, and if so, prints a debug log message to confirm.
         if (hit.collider.CompareTag("Target"))
         {
+            targetsHit ++; // DELETE WITH REST OF VFX TESTING
+            hitmarker.SetActive(true);
+            hitmarker.GetComponent<AudioSource>().Play(); // plays hitmarker sound!
+            HandleHitMarker();
+            Debug.Log("Target Hit!");
+            
+            if (targetsHit >= 3) // CURRENTLY TESTING FOR KILL MARKER SOUND AND VFX, DELETE ONCE PROPER DEATH IS SET
+            {
+                hitmarker.SetActive(false); // deactivates temporarily
+                HandleKillMarker();
+                killmarker.GetComponent<AudioSource>().Play(); // plays kill sound!!!
+                Debug.Log("Kill!");
+                targetsHit = 0;
+            }
+    
             // Handle hit on the target (e.g., play a hit marker sound, provide visual feedback).
             // You can also handle target health and scoring here if needed.
-            Debug.Log("Target Hit!");
         }
         }
 
