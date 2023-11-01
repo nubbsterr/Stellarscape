@@ -8,24 +8,33 @@ public class playerMovement : MonoBehaviour
     float sprintMultiplier = 2f;
     void Update()
     {
-        float horizontalInput = Input.GetAxis("Horizontal");
-        float verticalInput = Input.GetAxis("Vertical");
+        Vector3 movement = Vector3.zero; // movement is set to Zero by default, at rest.
 
-        Vector3 movement = new Vector3(horizontalInput, 0f, verticalInput);
-        movement = movement.normalized * playerSpeed * Time.deltaTime;
+    // Check for key presses
+    if (Input.GetKey(KeyCode.W))
+    {
+        movement += Vector3.forward;
+    }
+    if (Input.GetKey(KeyCode.S))
+    {
+        movement += Vector3.back;
+    }
+    if (Input.GetKey(KeyCode.A))
+    {
+        movement += Vector3.left;
+    }
+    if (Input.GetKey(KeyCode.D))
+    {
+        movement += Vector3.right;
+    }
+    if (Input.GetKey(KeyCode.LeftShift))
+    {
+        movement = movement*sprintMultiplier; // multiply our current movement values by the sprint multiplier (increase movement speed by 2)
+    }
+    // Apply speed and time scaling
+    Vector3 moveSpeed = movement * playerSpeed * Time.deltaTime;
 
-        // Check if Shift key is held down for sprinting
-        if (Input.GetKey(KeyCode.LeftShift))
-        {
-            movement *= sprintMultiplier;
-            Debug.Log("Sprinting");
-        }
-        // Normalize the movement vector before applying speed
-        movement.Normalize();
-
-        // Apply movement speed
-        
-        Vector3 moveSpeed = movement * playerSpeed * Time.deltaTime;
-        transform.Translate(movement);
+    // Apply movement
+    transform.Translate(moveSpeed);
     }
 }

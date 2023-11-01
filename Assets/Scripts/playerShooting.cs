@@ -9,6 +9,7 @@ public class playerShooting : MonoBehaviour
         public float fireRate = 0.1f; // controls full auto firerate, the delay between shots in full auto
         public float bulletSpeed = 10.0f; // the speed at which bullets will travel
         public Transform gunBarrel; // point where bullets will exit the gun
+        public Transform gunModel; // references our gun model in game
         public GameObject bulletPrefab; // a variable that will take our AR_Bullet prefab as an argument, allowing us to clone the bullet for shooting
         public GameObject crosshair; // refers to our crosshair on screen
         public GameObject hitmarker; // basic hitmarker image
@@ -18,12 +19,12 @@ public class playerShooting : MonoBehaviour
         private bool isShooting = false; // controls if a player is shooting or not
         private bool isADS = false; // controls/checks if the player is ADS'ed or ADSing to display the crosshair or not
         private float maxRaycastDistance = 100.0f; // sets the effective distance of bullets, since targets can only be hit up to 100m (100.0f) by the raycast.
-
+        private Transform GunBarrel; // used to update the gunbarrel's real position
         public int targetsHit = 0; // BURNER VARIABLE, DELETE ONCE DAMAGE DEALING AND PROPER DEATH IS SET
     // Start is called before the first frame update
     void Start()
     {
-        
+
     }
 
     // Update is called once per frame
@@ -81,6 +82,11 @@ public class playerShooting : MonoBehaviour
                 crosshair.SetActive(true); // re-enables the crosshair
             }
         }
+        if (gunBarrel != null) // if there is a gunbarrel object stored in the variable slot
+        {
+            gunBarrel.position = gunModel.position; // update the gun barrel's position to the gun model's position and rotation
+            gunBarrel.rotation = gunModel.rotation;
+        }
     }
 
     private void HandleHitMarker()
@@ -120,26 +126,23 @@ public class playerShooting : MonoBehaviour
 
         if (Physics.Raycast(ray, out hit, maxRaycastDistance))
         { // these two condiitonals check if the raycast has hit anything with the tag Target, and if so, prints a debug log message to confirm.
-        if (hit.collider.CompareTag("Target"))
-        {
-            targetsHit ++; // DELETE WITH REST OF VFX TESTING
-            hitmarker.SetActive(true);
-            hitmarker.GetComponent<AudioSource>().Play(); // plays hitmarker sound!
-            HandleHitMarker();
-            Debug.Log("Target Hit!");
-            
-            if (targetsHit >= 3) // CURRENTLY TESTING FOR KILL MARKER SOUND AND VFX, DELETE ONCE PROPER DEATH IS SET
+            if (hit.collider.CompareTag("Target"))
             {
-                hitmarker.SetActive(false); // deactivates temporarily
-                HandleKillMarker();
-                killmarker.GetComponent<AudioSource>().Play(); // plays kill sound!!!
-                Debug.Log("Kill!");
-                targetsHit = 0;
+                targetsHit ++; // DELETE WITH REST OF VFX TESTING
+                hitmarker.SetActive(true);
+                hitmarker.GetComponent<AudioSource>().Play(); // plays hitmarker sound!
+                HandleHitMarker();
+                Debug.Log("Target Hit!");
+            
+                if (targetsHit >= 3) // CURRENTLY TESTING FOR KILL MARKER SOUND AND VFX, DELETE ONCE PROPER DEATH IS SET
+                {
+                    hitmarker.SetActive(false); // deactivates temporarily
+                    HandleKillMarker();
+                    killmarker.GetComponent<AudioSource>().Play(); // plays kill sound!!!
+                    Debug.Log("Kill!");
+                    targetsHit = 0;
+                }
             }
-    
-            // Handle hit on the target (e.g., play a hit marker sound, provide visual feedback).
-            // You can also handle target health and scoring here if needed.
-        }
         }
 
         // Instantiate the bullet prefab at the gun barrel's position and rotation
@@ -156,12 +159,11 @@ public class playerShooting : MonoBehaviour
     }
     private void OnDrawGizmos() // bullet tracer for debugging, will follow the bullet's path!
     {
-        Gizmos.color = Color.red;
+        Gizmos.color = Color.yellow;
         Vector3 bulletStartPosition = gunBarrel.position;
         Vector3 bulletEndPosition = bulletStartPosition + gunBarrel.forward * bulletSpeed;
         Gizmos.DrawLine(bulletStartPosition, bulletEndPosition);
     }
-
 
     private IEnumerator FullAutoFire() // Coroutine for full-auto firing behavior (controls time between shots)
     {
