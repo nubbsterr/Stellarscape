@@ -1,19 +1,26 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using TMPro; // namespace for TextMeshPro to display ammo on-screen
 public class playerShooting : MonoBehaviour
 {
     // all public variables: (global booleans, variables, objects, etc.)
         public bool isFullAuto = false; // controls full auto firing and semiauto firing, depending on continous mouse input or not
+        public bool isReloading = false; // controls when we are reloading or not
+        public bool outofAmmo = false; // controls when we run out of ammo or not
+        public float reloadTime = 2.0f; // 2 second delay between reloading, cannot shoot during this delay
         public float fireRate = 0.1f; // controls full auto firerate, the delay between shots in full auto
         public float bulletSpeed = 10.0f; // the speed at which bullets will travel
+        public int currentMagAmmo = 30; // total mag ammo of the weapon, modifiable.
+        public int totalAmmo = 120; // total amount of ammo that is currently being held
         public Transform gunBarrel; // point where bullets will exit the gun
         public Transform gunModel; // references our gun model in game
         public GameObject bulletPrefab; // a variable that will take our AR_Bullet prefab as an argument, allowing us to clone the bullet for shooting
         public GameObject crosshair; // refers to our crosshair on screen
         public GameObject hitmarker; // basic hitmarker image
         public GameObject killmarker; // shows upon killing an enemy
+        public TextMeshProUGUI currentMagText; // refers to our currentMagAmmo variable so we can "dynamically" display it on our HUD!
+        public TextMeshProUGUI totalAmmoText; // same thing here but for our totalAmmo count!
     
     // private variables: (functions, private parameters, etc.)
         private bool isShooting = false; // controls if a player is shooting or not
@@ -31,13 +38,14 @@ public class playerShooting : MonoBehaviour
     void Update()
     {
         ADS(); // starts running our ADS function
+        Reloading(); // starts running our Reloading function
 
         if (Input.GetKeyDown(KeyCode.B))
         {
             isFullAuto = !isFullAuto; // Toggle between full-auto and semi-auto
             Debug.Log("Switched to " + (isFullAuto ? "Full Auto" : "Semi Auto"));
         }
-        if (isFullAuto && Input.GetMouseButton(0))
+        if (!outofAmmo&&isFullAuto && Input.GetMouseButton(0))
         {
             if (!isShooting)
             {
@@ -52,11 +60,9 @@ public class playerShooting : MonoBehaviour
             // In the case of FullAutoFire, it's used to simulate full-auto fire by repeatedly calling FireBullet at a specified rate.
             // The yield return new WaitForSeconds(fireRate) line controls the rate of fire. (found in Private EInumerator FullAutoFire function)
             isShooting = false;
-            Debug.Log("mouse released check"); // rarely promnpts on full and semi-auto fire
         }
-        else if (Input.GetMouseButtonDown(0)) // Semi-Auto firing mechanic
+        else if (!outofAmmo && Input.GetMouseButtonDown(0)) // Semi-Auto firing mechanic
         {
-            Debug.Log("Mouse input and firebullet check");
             FireBullet();
         }
 
@@ -89,12 +95,45 @@ public class playerShooting : MonoBehaviour
         }
     }
 
+    private void Reloading() 
+    {
+        if (currentMagAmmo == 0)
+        {
+            outofAmmo = true; // cease all firing if empty, player has to reload
+        }
+        if (currentMagAmmo == 10 || currentMagAmmo == 5 || currentMagAmmo == 1) // warning to reload
+        {
+            Debug.Log("Press R to Reload!"); // reloading warning
+        }
+        if(currentMagAmmo < 30 && (totalAmmo > 0 || currentMagAmmo == 0)) // if the player doesn't have a full mag or empty on ammo completely:
+        {
+            if (Input.GetKeyDown(KeyCode.R)) // reload key or if mag is empty (auto reload)
+            {
+                isReloading = true;
+                outofAmmo = true; // prevents shooting while reloading
+                Debug.Log("Reloading!");
+                int remainingAmmo = 30 - currentMagAmmo;
+                totalAmmo -= remainingAmmo; // subtract the remaining ammo from the total ammo
+                StartCoroutine(ReloadDelay()); // starts reloading and engages reload timer, disables shooting capabilites
+
+            }
+             else
+            {
+                if (currentMagAmmo == 0 && totalAmmo == 0)
+                {
+                    // if the player is totally out of ammo
+                    Debug.Log("Out of Ammo!");
+                    outofAmmo = true; // prevent shooting while out of ammo
+                }
+            }
+        }
+    }
     private void HandleHitMarker()
     {
-    hitmarker.SetActive(true); // Display the hit marker
+        hitmarker.SetActive(true); // Display the hit marker
 
-    // deactivates the hit marker after a specified delay
-    Invoke("DeactivateHitMarker", 0.3f);
+        // deactivates the hit marker after a specified delay
+        Invoke("DeactivateHitMarker", 0.3f);
     }
 
     private void DeactivateHitMarker()
@@ -104,10 +143,10 @@ public class playerShooting : MonoBehaviour
 
     private void HandleKillMarker()
     {
-    killmarker.SetActive(true); // Display the hit marker
+        killmarker.SetActive(true); // Display the hit marker
 
-    // deactivates the hit marker after a specified delay
-    Invoke("DeactivateKillMarker", 1.0f);
+        // deactivates the hit marker after a specified delay
+        Invoke("DeactivateKillMarker", 1.0f);
     }
 
     private void DeactivateKillMarker()
@@ -144,20 +183,28 @@ public class playerShooting : MonoBehaviour
                 }
             }
         }
-
-        // Instantiate the bullet prefab at the gun barrel's position and rotation
-        GameObject bulletInstance = Instantiate(bulletPrefab, gunBarrel.position, gunBarrel.rotation);
+        if (!outofAmmo)
+        {
+            // Instantiate the bullet prefab at the gun barrel's position and rotation
+            GameObject bulletInstance = Instantiate(bulletPrefab, gunBarrel.position, gunBarrel.rotation);
         
-        // Destroy the bullet clone after a delay (e.g., 10 seconds)
-        Destroy(bulletInstance, 10.0f); // each bullet has its own delay between being destroyed, which can be modified here.
+            currentMagAmmo = currentMagAmmo-1; // subtract 1 from the mag ammo
+            Debug.Log(currentMagAmmo); // print the current mag ammo
+        
+            // Update the UI text for currentMagAmmo
+            currentMagText.text = currentMagAmmo.ToString();
+        
+            // Destroy the bullet clone after a delay (e.g., 10 seconds)
+            Destroy(bulletInstance, 10.0f); // each bullet has its own delay between being destroyed, which can be modified here.
 
-        // Applies velocity to the bullet via RigidBody
-        Rigidbody bulletRigidbody = bulletInstance.GetComponent<Rigidbody>();
-        bulletRigidbody.velocity = gunBarrel.forward * bulletSpeed;
+            // Applies velocity to the bullet via RigidBody
+            Rigidbody bulletRigidbody = bulletInstance.GetComponent<Rigidbody>();
+            bulletRigidbody.velocity = gunBarrel.forward * bulletSpeed;
 
-        Debug.DrawRay(gunBarrel.position, gunBarrel.forward * bulletSpeed * 10, Color.red, 3.0f);
+            Debug.DrawRay(gunBarrel.position, gunBarrel.forward * bulletSpeed * 10, Color.red, 3.0f);
+        }
     }
-    private void OnDrawGizmos() // bullet tracer for debugging, will follow the bullet's path!
+    private void OnDrawGizmos() // displays the gun barrel's direction at which bullets will fire at (fake news, don't trust this unless in game runtime)
     {
         Gizmos.color = Color.yellow;
         Vector3 bulletStartPosition = gunBarrel.position;
@@ -168,12 +215,24 @@ public class playerShooting : MonoBehaviour
     private IEnumerator FullAutoFire() // Coroutine for full-auto firing behavior (controls time between shots)
     {
         isShooting = true;
-        while(isShooting && Input.GetMouseButton(0))
+        while(!outofAmmo && isShooting && Input.GetMouseButton(0))
         {
-            Debug.Log("enumerator check");
             FireBullet();
             yield return new WaitForSeconds(fireRate); // this controls the time gap between shots (firerate), we can edit this as needed by changing the value of our fireRate float!
         }
         isShooting = false; // Set isShooting to false when the firing loop stops, ceases all shooting mechanics
+    }
+
+    private IEnumerator ReloadDelay() // controls the delay between shooting and reloading, temporarily disables shooting while reloading for a specified duration
+    {
+        yield return new WaitForSeconds(reloadTime);
+        // reloading logic
+        currentMagAmmo = 30; // refresh mag ammo
+        currentMagText.text = currentMagAmmo.ToString();
+        totalAmmoText.text = totalAmmo.ToString(); // updates our totalAmmo count
+
+        // reenabled shootlng and disables reloading
+        outofAmmo = false;
+        isReloading = false;
     }
 }
