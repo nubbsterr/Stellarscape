@@ -1,9 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using TMPro; // namespace for TextMeshPro to display ammo on-screen
+using TMPro;
+using JetBrains.Annotations; // namespace for TextMeshPro to display ammo on-screen
+
 public class playerShooting : MonoBehaviour
 {
+
     // all public variables: (global booleans, variables, objects, etc.)
         public bool isFullAuto = false; // controls full auto firing and semiauto firing, depending on continous mouse input or not
         public bool isReloading = false; // controls when we are reloading or not
@@ -18,6 +21,7 @@ public class playerShooting : MonoBehaviour
         public GameObject bulletPrefab; // a variable that will take our AR_Bullet prefab as an argument, allowing us to clone the bullet for shooting
         public GameObject crosshair; // refers to our crosshair on screen
         public GameObject hitmarker; // basic hitmarker image
+        public GameObject gunSound; // controls our gun SFX so it doesn't run on startup
         public GameObject killmarker; // shows upon killing an enemy
         public TextMeshProUGUI currentMagText; // refers to our currentMagAmmo variable so we can "dynamically" display it on our HUD!
         public TextMeshProUGUI totalAmmoText; // same thing here but for our totalAmmo count!
@@ -26,10 +30,10 @@ public class playerShooting : MonoBehaviour
         private bool isShooting = false; // controls if a player is shooting or not
         private bool isADS = false; // controls/checks if the player is ADS'ed or ADSing to display the crosshair or not
         private float maxRaycastDistance = 100.0f; // sets the effective distance of bullets, since targets can only be hit up to 100m (100.0f) by the raycast.
-        private Transform GunBarrel; // used to update the gunbarrel's real position
         public int targetsHit = 0; // BURNER VARIABLE, DELETE ONCE DAMAGE DEALING AND PROPER DEATH IS SET
+    
     // Start is called before the first frame update
-    void Start()
+    void Start() // cringe
     {
 
     }
@@ -101,10 +105,6 @@ public class playerShooting : MonoBehaviour
         {
             outofAmmo = true; // cease all firing if empty, player has to reload
         }
-        if (currentMagAmmo == 10 || currentMagAmmo == 5 || currentMagAmmo == 1) // warning to reload
-        {
-            Debug.Log("Press R to Reload!"); // reloading warning
-        }
         if(currentMagAmmo < 30 && (totalAmmo > 0 || currentMagAmmo == 0)) // if the player doesn't have a full mag or empty on ammo completely:
         {
             if (Input.GetKeyDown(KeyCode.R)) // reload key or if mag is empty (auto reload)
@@ -112,10 +112,19 @@ public class playerShooting : MonoBehaviour
                 isReloading = true;
                 outofAmmo = true; // prevents shooting while reloading
                 Debug.Log("Reloading!");
-                int remainingAmmo = 30 - currentMagAmmo;
-                totalAmmo -= remainingAmmo; // subtract the remaining ammo from the total ammo
-                StartCoroutine(ReloadDelay()); // starts reloading and engages reload timer, disables shooting capabilites
-
+                if (totalAmmo > 30)
+                {
+                    int remainingAmmo = 30 - currentMagAmmo;
+                    totalAmmo -= remainingAmmo; // subtract the remaining ammo from the total ammo
+                    currentMagAmmo = 30; // refresh mag ammo
+                    StartCoroutine(ReloadDelay()); // starts reloading and engages reload timer, disables shooting capabilites
+                }
+                else 
+                {
+                    currentMagAmmo = totalAmmo;
+                    totalAmmo = 0;
+                    StartCoroutine(ReloadDelay()); // starts reloading and engages reload timer, disables shooting capabilites
+                }
             }
              else
             {
@@ -154,6 +163,18 @@ public class playerShooting : MonoBehaviour
         killmarker.SetActive(false);
     }
 
+    private void HandleGunSFX()
+    {
+        gunSound.SetActive(true); // Display the hit marker
+
+        // deactivates the hit marker after a specified delay
+        Invoke("DeactivateGunSFX", 0.6f);
+    }
+    private void DeactivateGunSFX() // enables and reenables gun sfx after a bullet is fired
+    {
+        gunSound.SetActive(false); 
+    }
+
     private void FireBullet()
     {
         Ray ray = new Ray(gunBarrel.position, gunBarrel.forward); 
@@ -187,6 +208,10 @@ public class playerShooting : MonoBehaviour
         {
             // Instantiate the bullet prefab at the gun barrel's position and rotation
             GameObject bulletInstance = Instantiate(bulletPrefab, gunBarrel.position, gunBarrel.rotation);
+            
+            gunSound.SetActive(true); // activates itself
+            gunSound.GetComponent<AudioSource>().Play(); // plays gunSFX, temp audio, will change later down the line
+            HandleGunSFX();
         
             currentMagAmmo = currentMagAmmo-1; // subtract 1 from the mag ammo
             Debug.Log(currentMagAmmo); // print the current mag ammo
@@ -227,7 +252,6 @@ public class playerShooting : MonoBehaviour
     {
         yield return new WaitForSeconds(reloadTime);
         // reloading logic
-        currentMagAmmo = 30; // refresh mag ammo
         currentMagText.text = currentMagAmmo.ToString();
         totalAmmoText.text = totalAmmo.ToString(); // updates our totalAmmo count
 
