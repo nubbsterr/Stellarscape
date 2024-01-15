@@ -5,17 +5,15 @@ using UnityEngine;
 
 public class WeaponRecoil : MonoBehaviour
 {
-    // ADS boolean acquiring
+    // ADS boolean getting and setting
     [SerializeField] private ADS ADS_Script;
-    
-    // Bool
     private bool isAiming;
 
-    // Rotations
+    // Rotation vars
     private Vector3 currentRotation;
     private Vector3 targetRotation;
 
-    // Hipfire recoil
+    // hipfire recoil vars
     [SerializeField] private float recoilX;
     [SerializeField] private float recoilY;
     [SerializeField] private float recoilZ;
@@ -24,7 +22,7 @@ public class WeaponRecoil : MonoBehaviour
     [SerializeField] private float ADS_recoilY;
     [SerializeField] private float ADS_recoilZ;
 
-    // Settings
+    // recoil settings
     [SerializeField] private float snappiness; // controls recoil snappiness/speed 
     [SerializeField] private float returnSpeed; // multiplier for returning weapon to OG rotation
     
