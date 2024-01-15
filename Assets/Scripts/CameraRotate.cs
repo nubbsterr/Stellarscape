@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CamerRotate : MonoBehaviour
+public class CameraRotate : MonoBehaviour
 {
     public Transform player; // refers to our player so we can rotate them
     public float rotateSpeed = 1.0f; // controls the speed at which the camera will rotate along an axis
@@ -29,7 +29,7 @@ public class CamerRotate : MonoBehaviour
         xRotation = Mathf.Clamp(xRotation, -90f, 90f); // clamping so we can't rotate paste 90 degrees up or down
         
         // camera rotation
-        transform.rotation = Quaternion.Euler(xRotation, yRotation, 0);
+        transform.localRotation = Quaternion.Euler(xRotation, yRotation, 0); // must be localRotation for recoil to work!!!
         // player rotation
         player.rotation = Quaternion.Euler(0, yRotation, 0);
     }

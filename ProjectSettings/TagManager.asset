@@ -6,6 +6,8 @@ TagManager:
   tags:
   - Ground
   - Target
+  - Head
+  - Gun Model
   layers:
   - Default
   - TransparentFX
@@ -16,7 +18,7 @@ TagManager:
   - Player
   - Ground
   - Camera
-  - 
+  - Reticles
   - 
   - 
   - 

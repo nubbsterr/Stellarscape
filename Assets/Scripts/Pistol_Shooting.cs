@@ -2,7 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
-using JetBrains.Annotations; // namespace for TextMeshPro to display ammo on-screen
+using JetBrains.Annotations;
+using UnityEngine.UI; // namespace for TextMeshPro to display ammo on-screen
 
 public class Pistol_Shooting : MonoBehaviour
 {
@@ -14,63 +15,73 @@ public class Pistol_Shooting : MonoBehaviour
         public float bulletSpeed = 10.0f; // the speed at which bullets will travel
         public int currentMagAmmo = 17; // total mag ammo of the weapon, modifiable.
         public int totalAmmo = 51; // total amount of ammo that is currently being held
+        
         public Transform gunBarrel; // point where bullets will exit the gun
         public Transform gunModel; // references our gun model in game
+        public Transform ejectionPort;
+        [SerializeField] private Transform shootingPoint; // temp var for finding ADS point
+        public Transform ShootingPoint
+        {
+            get { return shootingPoint; }
+        }
+        
         public GameObject bulletPrefab; // a variable that will take our AR_Bullet prefab as an argument, allowing us to clone the bullet for shooting
+        public GameObject cartridge;
         public GameObject crosshair; // refers to our crosshair on screen
         public GameObject hitmarker; // basic hitmarker image
-        public GameObject gunSound; // controls our gun SFX so it doesn't run on startup
+        public GameObject headshotmarker;
         public GameObject killmarker; // shows upon killing an enemy
+        public GameObject gunSound; // controls our gun SFX so it doesn't run on startup
+        
         public TextMeshProUGUI Pistol_currentMagText; // refers to our currentMagAmmo variable so we can "dynamically" display it on our HUD!
         public TextMeshProUGUI Pistol_totalAmmoText; // same thing here but for our totalAmmo count!
+       
         public AudioClip gunSFX; // so we can play it but not clip/break it
         public AudioClip hitSFX;
         public AudioClip killSFX;
+        public AudioClip headshotSFX;
+
+        public ParticleSystem muzzleflash; // controls when muzzle flash is shown after firing
+        private WeaponRecoil RecoilScript; // reference our Recoil function
     
     // private variables: (functions, private parameters, etc.)
-        private bool isADS = false; // controls/checks if the player is ADS'ed or ADSing to display the crosshair or not
-        private float maxRaycastDistance = 80.0f; // sets the effective distance of bullets, since targets can only be hit up to 100m (100.0f) by the raycast.
         public int targetsHit = 0; // BURNER VARIABLE, DELETE ONCE DAMAGE DEALING AND PROPER DEATH IS SET
     
     // Start is called before the first frame update
     void Start() // cringe
     {
-
+        RecoilScript = GameObject.Find("WeaponManager").GetComponent<WeaponRecoil>(); // acquire recoil script on startup
     }
 
     // Update is called once per frame
     void Update()
     {
-        ADS(); // starts running our ADS function
+        BarrelPosUpdate(); // update gunbarrel position to fire weapons properly
         Reloading(); // starts running our Reloading function
 
-        if (!outofAmmo && Input.GetMouseButtonDown(0)) // Semi-Auto firing mechanic
+        // ADS control, disbale crosshair image when ADSed
+        if (Input.GetMouseButtonDown(1))
+        {
+            hitmarker.GetComponent<RawImage>().enabled = false;
+            killmarker.GetComponent<RawImage>().enabled = false;
+            headshotmarker.GetComponent<RawImage>().enabled = false;
+        }
+        if (Input.GetMouseButtonUp(1))
+        {
+            hitmarker.GetComponent<RawImage>().enabled = true;
+            killmarker.GetComponent<RawImage>().enabled = true;
+            headshotmarker.GetComponent<RawImage>().enabled = true;
+        }
+
+        if (!outofAmmo && Input.GetMouseButtonDown(0)) // Semi-Auto firing mechanic, cannot fire while sprinting
         {
             FireBullet();
         }
 
     }
 
-    private void ADS()
+    private void BarrelPosUpdate()
     {
-        if (isADS == false)
-        {
-            crosshair.SetActive(true); // activates the crosshair onscreen
-            if (Input.GetMouseButtonDown(1))
-            {
-                isADS = true;
-                crosshair.SetActive(false); // deactivates the crosshair onscreen
-            }
-        }
-        else if (isADS == true) // if we are ADSed
-        {
-            crosshair.SetActive(false); // crosshair is deactivated
-            if (Input.GetMouseButtonUp(1)) // if mouse2 is released
-            {
-                isADS = false;
-                crosshair.SetActive(true); // re-enables the crosshair
-            }
-        }
         if (gunBarrel != null) // if there is a gunbarrel object stored in the variable slot
         {
             gunBarrel.position = gunModel.position; // update the gun barrel's position to the gun model's position and rotation
@@ -80,6 +91,10 @@ public class Pistol_Shooting : MonoBehaviour
 
     private void Reloading() 
     {
+        if (currentMagAmmo <= 3)
+        {
+            Pistol_currentMagText.color = Color.red;
+        }
         if (currentMagAmmo == 0)
         {
             outofAmmo = true; // cease all firing if empty, player has to reload
@@ -88,6 +103,7 @@ public class Pistol_Shooting : MonoBehaviour
         {
             if (Input.GetKeyDown(KeyCode.R)) // reload key or if mag is empty (auto reload)
             {
+                Pistol_currentMagText.color = Color.red;
                 isReloading = true;
                 outofAmmo = true; // prevents shooting while reloading
                 Debug.Log("Reloading!");
@@ -110,102 +126,70 @@ public class Pistol_Shooting : MonoBehaviour
                 if (currentMagAmmo == 0 && totalAmmo == 0)
                 {
                     // if the player is totally out of ammo
-                    Debug.Log("Out of Ammo!");
+                    Pistol_currentMagText.color = Color.red;
+                    Pistol_totalAmmoText.color = Color.red;
                     outofAmmo = true; // prevent shooting while out of ammo
+                }
+                if (totalAmmo == 0)
+                {
+                    Pistol_totalAmmoText.color = Color.red;
                 }
             }
         }
-    }
-    private void HandleHitMarker()
-    {
-        hitmarker.SetActive(true); // Display the hit marker
-
-        // deactivates the hit marker after a specified delay
-        Invoke("DeactivateHitMarker", 0.3f);
-    }
-
-    private void DeactivateHitMarker()
-    {
-        hitmarker.SetActive(false);
-    }
-
-    private void HandleKillMarker()
-    {
-        killmarker.SetActive(true); // Display the hit marker
-
-        // deactivates the hit marker after a specified delay
-        Invoke("DeactivateKillMarker", 1.0f);
-    }
-
-    private void DeactivateKillMarker()
-    {
-        killmarker.SetActive(false);
-    }
-
-    private void HandleGunSFX()
-    {
-        gunSound.SetActive(true); // Display the hit marker
-
-        // deactivates the hit marker after a specified delay
-        Invoke("DeactivateGunSFX", 0.6f);
-    }
-    private void DeactivateGunSFX() // enables and reenables gun sfx after a bullet is fired
-    {
-        gunSound.SetActive(false); 
     }
 
     private void FireBullet()
     {
-        Ray ray = new Ray(gunBarrel.position, gunBarrel.forward); 
-        // Creates a new ray starting from the gun barrel's position and extending forward.
-        // This ray represents the path the bullet will follow.
-        RaycastHit hit; 
-        // RaycastHit hit is a data structure that will store information about what the ray hits.
-        // It's used to detect if the ray intersects with any objects and gather information about that intersection.
-
-        if (Physics.Raycast(ray, out hit, maxRaycastDistance))
-        { // these two condiitonals check if the raycast has hit anything with the tag Target, and if so, prints a debug log message to confirm.
-            if (hit.collider.CompareTag("Target"))
-            {
-                targetsHit ++; // DELETE WITH REST OF VFX TESTING
-                hitmarker.SetActive(true);
-                hitmarker.GetComponent<AudioSource>().PlayOneShot(hitSFX); // plays hitmarker sound!
-                HandleHitMarker();
-                Debug.Log("Target Hit!");
-            
-                if (targetsHit >= 4) // CURRENTLY TESTING FOR KILL MARKER SOUND AND VFX, DELETE ONCE PROPER DEATH IS SET
-                {
-                    hitmarker.SetActive(false); // deactivates temporarily
-                    HandleKillMarker();
-                    killmarker.GetComponent<AudioSource>().PlayOneShot(killSFX); // plays kill sound!!!
-                    Debug.Log("Kill!");
-                    targetsHit = 0;
-                }
-            }
-        }
         if (!outofAmmo)
         {
+            // play muzzle flash effect
+            muzzleflash.Play();
+
+            // run recoil command
+            RecoilScript.RecoilOnFire();
+
+            // enable bullet tracers, in case they've been disabled by separate scripts
+            bulletPrefab.GetComponent<TrailRenderer>().enabled = true;
+
+            // bullet ejection logic
+            GameObject emptyCartridge = Instantiate(cartridge, gunBarrel.position, Quaternion.Euler(ejectionPort.localEulerAngles.x,180f,ejectionPort.localEulerAngles.z)); // massive line, this locks the rotation so the cartridge is facing forwards when we launch it out
+            Rigidbody cartidge = emptyCartridge.GetComponent<Rigidbody>(); 
+            cartidge.AddForce(ejectionPort.forward * 4f, ForceMode.Impulse);
+            
+            if (Input.GetAxis("Horizontal") > 0)
+            {
+                cartidge.AddForce(ejectionPort.forward * 10f, ForceMode.Impulse);
+            }
+            if (Input.GetAxis("Horizontal") > 0 && Input.GetKey(KeyCode.LeftShift))
+            {
+                cartidge.AddForce(ejectionPort.forward * 30f, ForceMode.Impulse);
+            }
+            
+            cartidge.AddForce(ejectionPort.forward * 11f, ForceMode.Impulse);
+            Destroy(emptyCartridge, 3f);
+
+            bulletPrefab.GetComponent<TrailRenderer>().enabled = true;
+            
             // Instantiate the bullet prefab at the gun barrel's position and rotation
             GameObject bulletInstance = Instantiate(bulletPrefab, gunBarrel.position, gunBarrel.rotation);
-            
+
+            // getting hitmarker assets and sending them to bulletCollision script for use!
+            bulletInstance.GetComponent<bulletCollision>().hitmarker = hitmarker;
+            bulletInstance.GetComponent<bulletCollision>().killmarker = killmarker;
+            bulletInstance.GetComponent<bulletCollision>().headshotmarker = headshotmarker;
+                
             gunSound.SetActive(true); // activates itself
             gunSound.GetComponent<AudioSource>().PlayOneShot(gunSFX); // plays gunSFX, temp audio, will change later down the line
-            HandleGunSFX();
-        
+            
+            // Update UI Text and subtract ammo count
             currentMagAmmo = currentMagAmmo-1; // subtract 1 from the mag ammo
-            Debug.Log(currentMagAmmo); // print the current mag ammo
-        
-            // Update the UI text for currentMagAmmo
             Pistol_currentMagText.text = currentMagAmmo.ToString();
-        
-            // Destroy the bullet clone after a delay (e.g., 10 seconds)
-            Destroy(bulletInstance, 10.0f); // each bullet has its own delay between being destroyed, which can be modified here.
 
             // Applies velocity to the bullet via RigidBody
             Rigidbody bulletRigidbody = bulletInstance.GetComponent<Rigidbody>();
             bulletRigidbody.velocity = gunBarrel.forward * bulletSpeed;
 
-            Debug.DrawRay(gunBarrel.position, gunBarrel.forward * bulletSpeed * 10, Color.red, 3.0f);
+            Destroy(bulletInstance,5f); // destroy bullet after a short delay
         }
     }
     private void OnDrawGizmos() // displays the gun barrel's direction at which bullets will fire at (fake news, don't trust this unless in game runtime)
@@ -223,6 +207,8 @@ public class Pistol_Shooting : MonoBehaviour
         Pistol_currentMagText.text = currentMagAmmo.ToString();
         Pistol_totalAmmoText.text = totalAmmo.ToString(); // updates our totalAmmo count
 
+        Pistol_currentMagText.color = Color.white;
+        Pistol_totalAmmoText.color = Color.white;
         // reenabled shootlng and disables reloading
         outofAmmo = false;
         isReloading = false;
