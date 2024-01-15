@@ -1,0 +1,4 @@
+*.ShaderLab linguist-detectable=false
+*.HLSL linguist-detectable=false
+
+# Sets the correct language for the repo because linguist is stoopid >:(
