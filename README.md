@@ -1,4 +1,4 @@
-# Game Update || Commit 11
+# Game Update || Version 0.1pa
 ## Commit Notes 📒
 - Implemented procedural recoil for weapons. This is not tuned specifically for each weapon *yet*, but the alpha vesion should have such as a feature.
 - Jumping has been finally added to the game, as well as sliding. Sliding is rather iffy and requires very fine user input, so it might be removed altogether sicne it's very buggy at the moment.
@@ -9,5 +9,5 @@
 - <a href="https://medium.com/@nubb" target="_blank" style="text-decoration:none;" >Check out devlogs here!</a>
 
 - Official Stellarscape Site (coming soon)
-
 ###### Last updated Jan 15 2024
+###### Version 0.1a, where the version # is changed after every new commit/update (pa = pre-alpha, a = alpha...).
