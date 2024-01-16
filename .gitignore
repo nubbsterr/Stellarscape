@@ -44,6 +44,8 @@ Stellarscape FPS.sln
 
 .vs/Stellarscape/
 ProjectSettings/
+Assets/Scripts/
+Project Builds/
 
 
 # Gradle cache directory
