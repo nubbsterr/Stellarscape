@@ -161,9 +161,11 @@ MonoBehaviour:
   hitmarker: {fileID: 0}
   killmarker: {fileID: 0}
   headshotmarker: {fileID: 0}
+  bulletHole: {fileID: 6717336658134847453, guid: 33014beabce99864197a26f0eea96c73, type: 3}
   hitSFX: {fileID: 8300000, guid: 83f9779ca1cc27844a906c7a3b9d9ca9, type: 3}
   killSFX: {fileID: 8300000, guid: 01a96e756c1f5144e8f346810d34744e, type: 3}
   headshotSFX: {fileID: 8300000, guid: 416d0d30199bba242992df789ff5c0e8, type: 3}
+  enemyControlScript: {fileID: 0}
 --- !u!96 &7472524547682907624
 TrailRenderer:
   serializedVersion: 3
