@@ -1,3 +1,5 @@
+# !! Not working on this no more, <a href="https://medium.com/@nubb/personal-update-6901c9fd3f39" target="_blank" style="decoration:none">see update here.</a>
+
 # Game Update || Version 0.1pa
 ## Commit Notes 📑
 - Bullet holes are being implemented at the moment, but are very buggy. I will commit to the repo once they're fixed.
